@@ -1,0 +1,97 @@
+
+#include <iostream>  // Библиотека ввода и вывода
+#include <fstream>   // Библиотека для работы с файлами
+#include <windows.h> // Библиотека Windows для функции Sleep()
+
+using namespace std; // Используем стандартное пространство имён
+
+// Структура с информацией о студенте
+struct Student
+{
+    char name[25]; // Фамилия студента
+    int grades[5]; // Пять оценок студента
+} A;                // Создаём объект структуры A
+
+int main()
+{
+    setlocale(LC_ALL, "rus"); // Настройка русского языка
+
+    // Пути к файлам запросов и ответов
+    const char* nameR = "C:/REQUEST.bin";
+    const char* nameA = "C:/ANSWER.bin";
+
+    ofstream f_REQ; // Поток записи запроса
+    ifstream f_ANS; // Поток чтения ответа
+
+    long pred_size; // Размер файла ответов до отправки запроса
+    int answer;     // Полученный размер стипендии
+
+    // Запрашиваем фамилию студента
+    cout << "Введите запрос: Фамилия и 5 оценок" << endl;
+
+    cin >> A.name; // Считываем фамилию
+
+    // Считываем пять оценок
+    for (int i = 0; i < 5; i++)
+    {
+        cin >> A.grades[i];
+    }
+
+    // Выводим введённые данные для проверки
+    cout << A.name;
+
+    for (int i = 0; i < 5; i++)
+    {
+        cout << " " << A.grades[i];
+    }
+
+    cout << endl;
+
+    // Открываем файл ответов
+    f_ANS.open(nameA, ios::binary);
+
+    // Переходим в конец файла
+    f_ANS.seekg(0, ios::end);
+
+    // Запоминаем текущий размер файла
+    pred_size = f_ANS.tellg();
+
+    f_ANS.close(); // Закрываем файл ответов
+
+    // Открываем файл запросов для добавления данных
+    f_REQ.open(nameR, ios::app | ios::binary);
+
+    // Записываем структуру студента в бинарный файл
+    f_REQ.write((char*)&A, sizeof(A));
+
+    f_REQ.close(); // Закрываем файл запросов
+
+    // Открываем файл ответов для чтения
+    f_ANS.open(nameA, ios::binary);
+
+    f_ANS.seekg(0, ios::end); // Переходим в конец файла
+
+    // Ожидаем, пока сервер запишет ответ
+    while (pred_size >= f_ANS.tellg())
+    {
+        Sleep(100); // Ждём 100 миллисекунд
+
+        f_ANS.clear(); // Сбрасываем состояние потока
+
+        f_ANS.seekg(0, ios::end); // Проверяем конец файла
+    }
+
+    // Переходим к началу нового ответа
+    f_ANS.seekg(pred_size, ios::beg);
+
+    // Считываем размер стипендии
+    f_ANS.read((char*)&answer, sizeof(answer));
+
+    f_ANS.close(); // Закрываем файл ответов
+
+    // Выводим результат
+    cout << "Размер стипендии: "
+         << answer << " рублей" << endl;
+
+    return 0; // Завершение программы
+}
